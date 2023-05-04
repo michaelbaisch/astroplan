@@ -825,7 +825,9 @@ class PriorityScheduler(Scheduler):
         delete_this_block_first = False
         if self.schedule.slots[slot_index].block:
             if isinstance(self.schedule.slots[slot_index].block, ObservingBlock):
-                raise ValueError('block already occupied')
+                print(f'block ({self.schedule.slots[slot_index].block}) already occupied - returning false')
+                return False
+                #raise ValueError('block already occupied')
             else:
                 delete_this_block_first = True
 
