@@ -34,7 +34,8 @@ dependencies = [
 [project.optional-dependencies]
 all = [
     "matplotlib>=3.6.0",
-    "astroquery"
+    "astroquery",
+    "skyfield"
 ]
 test = [
     "pytest-astropy",
@@ -47,6 +48,9 @@ docs = [
 ]
 plotting = [
     "astroplan[all]"
+]
+tle = [
+    "skyfield"
 ]
 
 [project.readme]
