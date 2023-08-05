@@ -281,15 +281,16 @@ class Schedule(object):
                 start_times.append(slot.start.iso)
                 end_times.append(slot.end.iso)
                 durations.append('{:.4f}'.format(slot.duration.to(u.minute).value))
-                target_names.append(slot.block.target.name)
-                if isinstance(slot.block.target, FixedTarget):
+                target = slot.block.target
+                target_names.append(target.name)
+                if isinstance(target, FixedTarget):
                     coordiante_type.append("RA/Dec")
-                    coordinate_info.append(slot.block.target.coord.to_string('hmsdms'))
-                elif isinstance(slot.block.target, TLETarget):
+                    coordinate_info.append(target.coord.to_string('hmsdms'))
+                elif isinstance(target, TLETarget):
                     coordiante_type.append("TLE")
                     coordinate_info.append(
-                        f"#{slot.block.target.satellite.model.satnum} "
-                        f"epoch {slot.block.target.satellite.epoch.utc_strftime(format='%Y-%m-%d %H:%M:%S')}"
+                        f"#{target.satellite.model.satnum} "
+                        f"epoch {target.satellite.epoch.utc_strftime(format='%Y-%m-%d %H:%M:%S')}"
                     )
                 config.append(slot.block.configuration)
             elif show_transitions and slot.block:
@@ -311,7 +312,8 @@ class Schedule(object):
                 coordiante_type.append('')
                 coordinate_info.append('')
                 config.append('')
-        return Table([target_names, start_times, end_times, durations, coordiante_type, coordinate_info, config],
+        return Table([target_names, start_times, end_times,
+                      durations, coordiante_type, coordinate_info, config],
                      names=('target', 'start time (UTC)', 'end time (UTC)',
                             'duration (min)', 'type', 'coordinates/info', 'configuration'))
 
