@@ -16,7 +16,7 @@ import warnings
 # Third-party
 from astropy.time import Time
 import astropy.units as u
-from astropy.coordinates import get_body, get_sun, get_moon, Galactic, SkyCoord
+from astropy.coordinates import get_body, get_sun, Galactic, SkyCoord
 from astropy import table
 
 import numpy as np
@@ -258,16 +258,17 @@ class Constraint(object):
                                          time_resolution=time_grid_resolution)
 
         if grid_times_targets:
-            targets = get_skycoord(targets)
+            targets = get_skycoord(targets, times)
             # TODO: these broadcasting operations are relatively slow
             # but there is potential for huge speedup if the end user
             # disables gridding and re-shapes the coords themselves
             # prior to evaluating multiple constraints.
-            if targets.isscalar:
-                # ensure we have a (1, 1) shape coord
-                targets = SkyCoord(np.tile(targets, 1))[:, np.newaxis]
-            else:
-                targets = targets[..., np.newaxis]
+            if not observer._is_broadcastable(targets.shape, times.shape):
+                if targets.isscalar:
+                    # ensure we have a (1, 1) shape coord
+                    targets = SkyCoord(np.tile(targets, 1))[:, np.newaxis]
+                else:
+                    targets = targets[..., np.newaxis]
         times, targets = observer._preprocess_inputs(times, targets, grid_times_targets=False)
         result = self.compute_constraint(times, observer, targets)
 
@@ -590,7 +591,7 @@ class MoonSeparationConstraint(Constraint):
         self.ephemeris = ephemeris
 
     def compute_constraint(self, times, observer, targets):
-        moon = get_moon(times, location=observer.location, ephemeris=self.ephemeris)
+        moon = get_body("moon", times, location=observer.location, ephemeris=self.ephemeris)
         # note to future editors - the order matters here
         # moon.separation(targets) is NOT the same as targets.separation(moon)
         # the former calculates the separation in the frame of the moon coord

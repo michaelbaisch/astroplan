@@ -6,15 +6,22 @@ import numpy as np
 from astropy.time import Time
 import astropy.units as u
 from astropy.coordinates import SkyCoord, EarthLocation
+import pytest
+try:
+    import skyfield  # noqa
+    HAS_SKYFIELD = True
+except ImportError:
+    HAS_SKYFIELD = False
 
 from ..utils import time_grid_from_range
 from ..observer import Observer
-from ..target import FixedTarget, get_skycoord
+from ..target import FixedTarget, TLETarget, get_skycoord
 from ..constraints import (AirmassConstraint, AtNightConstraint, _get_altaz,
                            MoonIlluminationConstraint, PhaseConstraint)
 from ..periodic import EclipsingSystem
 from ..scheduling import (ObservingBlock, PriorityScheduler, SequentialScheduler,
                           Transitioner, TransitionBlock, Schedule, Slot, Scorer)
+from ..exceptions import InvalidTLEDataWarning
 
 vega = FixedTarget(coord=SkyCoord(ra=279.23473479 * u.deg, dec=38.78368896 * u.deg),
                    name="Vega")
@@ -157,6 +164,30 @@ def test_priority_scheduler():
     # filled schedule
     scheduler(blocks, schedule)
     scheduler(blocks, schedule)
+
+    # Check if the order of equal values is respected:
+    # 1. For equal priorities in blocks
+    # 2. For equal scores (boolean_constraint)
+    constraints = [AirmassConstraint(3, boolean_constraint=True)]
+    scheduler.constraints = constraints
+    # Any resolution coarser than this may result in gaps between the blocks
+    scheduler.time_resolution = 20*u.second
+    # This only happens with more than 16 items or so
+    targets_18 = [polaris, polaris, polaris, polaris, polaris, polaris,
+                  polaris, polaris, polaris, polaris, polaris, polaris,
+                  polaris, polaris, polaris, polaris, polaris, polaris]
+    blocks = [ObservingBlock(t, 4*u.minute, 5, name=i) for i, t in enumerate(targets_18)]
+
+    schedule = Schedule(start_time, end_time)
+    scheduler(blocks, schedule)
+
+    for i, t in enumerate(targets_18):
+        # Order of blocks
+        block = schedule.observing_blocks[i]
+        assert block.name == i
+        if i < len(targets_18) - 1:
+            # Same score for all timeslots, should be filled from the start without gaps
+            assert block.end_time.isclose(schedule.observing_blocks[i+1].start_time)
 
 
 def test_sequential_scheduler():
@@ -302,3 +333,43 @@ def test_scorer():
     scores = scorer.create_score_array(time_resolution=20 * u.minute)
     # the ``global_constraint``: constraint2 should have applied to the blocks
     assert np.array_equal(c2, scores)
+
+
+@pytest.mark.skipif('not HAS_SKYFIELD')
+def test_priority_scheduler_TLETarget():
+    line1 = "1 25544U 98067A   23215.27256123  .00041610  00000-0  73103-3 0  9990"
+    line2 = "2 25544  51.6403  95.2411 0000623 157.9606 345.0624 15.50085581409092"
+    iss = TLETarget(name="ISS (ZARYA)", line1=line1, line2=line2, observer=apo)
+    constraints = [AirmassConstraint(3, boolean_constraint=False)]
+    blocks = [ObservingBlock(t, 5*u.minute, i) for i, t in enumerate(targets)]
+    blocks.append(ObservingBlock(iss, 0.5*u.minute, 4))
+    start_time = Time('2016-02-06 03:00:00')
+    end_time = start_time + 1*u.hour
+    scheduler = PriorityScheduler(transitioner=default_transitioner,
+                                  constraints=constraints, observer=apo,
+                                  time_resolution=0.5*u.minute)
+    schedule = Schedule(start_time, end_time)
+    scheduler(blocks, schedule)
+    assert len(schedule.observing_blocks) == 3
+    assert all(np.abs(block.end_time - block.start_time - block.duration) <
+               1*u.second for block in schedule.scheduled_blocks)
+    assert all([schedule.observing_blocks[0].target == polaris,
+                schedule.observing_blocks[1].target == rigel,
+                schedule.observing_blocks[2].target == iss])
+
+    # test that the scheduler does not error when called with a partially
+    # filled schedule
+    scheduler(blocks, schedule)
+    scheduler(blocks, schedule)
+
+    # Time too far in the future where elements stop making physical sense
+    with pytest.warns():
+        start_time = Time('2035-08-02 10:00:00')
+        end_time = start_time + 1*u.hour
+        schedule = Schedule(start_time, end_time)
+    with pytest.warns(InvalidTLEDataWarning):
+        scheduler(blocks, schedule)
+    assert len(schedule.observing_blocks) == 3
+    assert all([schedule.observing_blocks[0].target == vega,
+                schedule.observing_blocks[1].target == rigel,
+                schedule.observing_blocks[2].target == polaris])

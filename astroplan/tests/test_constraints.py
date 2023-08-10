@@ -5,7 +5,7 @@ import datetime as dt
 import numpy as np
 import astropy.units as u
 from astropy.time import Time
-from astropy.coordinates import Galactic, SkyCoord, get_sun, get_moon
+from astropy.coordinates import Galactic, SkyCoord, get_sun, get_body
 from astropy.utils import minversion
 import pytest
 
@@ -204,7 +204,7 @@ def test_moon_separation():
     time = Time('2003-04-05 06:07:08')
     apo = Observer.at_site("APO")
     altaz_frame = apo.altaz(time)
-    moon = get_moon(time, apo.location).transform_to(altaz_frame)
+    moon = get_body("moon", time, apo.location).transform_to(altaz_frame)
     one_deg_away = SkyCoord(az=moon.az, alt=moon.alt+1*u.deg, frame=altaz_frame)
     five_deg_away = SkyCoord(az=moon.az+5*u.deg, alt=moon.alt,
                              frame=altaz_frame)
@@ -447,7 +447,17 @@ def test_caches_shapes():
     targets = get_skycoord([m31, ippeg, htcas])
     observer = Observer.at_site('lapalma')
     ac = AltitudeConstraint(min=30*u.deg)
-    assert ac(observer, targets, times, grid_times_targets=True).shape == (3, 3)
+
+    # When time and targets are the same size,
+    # they're broadcastable and grid_times_targets is ignored
+    assert ac(observer, targets, times, grid_times_targets=True).shape == (3,)
+    targets = get_skycoord([m31, ippeg])
+    assert ac(observer, targets, times, grid_times_targets=True).shape == (2, 3)
+
+    # When time and targets don't have the same size this fails with grid_times_targets=False
+    with pytest.raises(ValueError):
+        ac(observer, targets, times, grid_times_targets=False)
+    targets = get_skycoord([m31, ippeg, htcas])
     assert ac(observer, targets, times, grid_times_targets=False).shape == (3,)
 
 
