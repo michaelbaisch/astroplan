@@ -1,6 +1,4 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 
 import numpy as np
 from astropy.time import Time
@@ -30,7 +28,8 @@ rigel = FixedTarget(coord=SkyCoord(ra=78.63446707 * u.deg, dec=8.20163837 * u.de
 polaris = FixedTarget(coord=SkyCoord(ra=37.95456067 * u.deg,
                                      dec=89.26410897 * u.deg), name="Polaris")
 
-apo = Observer(EarthLocation.of_site('apo'), name='APO')
+apo = Observer(EarthLocation(-1463969.30185172, -5166673.34223433, 3434985.71204565, unit='m'),
+               name='APO')
 targets = [vega, polaris, rigel]
 default_time = Time('2016-02-06 03:00:00')
 only_at_night = [AtNightConstraint()]
@@ -214,6 +213,7 @@ def test_sequential_scheduler():
     scheduler(blocks, schedule)
 
 
+@pytest.mark.remote_data
 def test_scheduling_target_down():
     lco = Observer.at_site('lco')
     block = [ObservingBlock(FixedTarget.from_name('polaris'), 1 * u.min, 0)]
@@ -231,6 +231,7 @@ def test_scheduling_target_down():
     assert len(schedule2.observing_blocks) == 0
 
 
+@pytest.mark.remote_data
 def test_scheduling_during_day():
     block = [ObservingBlock(FixedTarget.from_name('polaris'), 1 * u.min, 0)]
     day = Time('2016-02-06 03:00:00')
@@ -249,6 +250,7 @@ def test_scheduling_during_day():
 # bring this back when MoonIlluminationConstraint is working properly
 
 
+@pytest.mark.remote_data
 def test_scheduling_moon_up():
     block = [ObservingBlock(FixedTarget.from_name('polaris'), 30 * u.min, 0)]
     # on february 23 the moon was up between the start/end times defined below
@@ -367,7 +369,10 @@ def test_priority_scheduler_TLETarget():
         start_time = Time('2035-08-02 10:00:00')
         end_time = start_time + 1*u.hour
         schedule = Schedule(start_time, end_time)
-    with pytest.warns(InvalidTLEDataWarning):
+    
+    # InvalidTLEDataWarning/AstropyWarning and
+    # ErfaWarning: ERFA function "utctai" yielded 121 of "dubious year (Note 3)"
+    with pytest.warns():
         scheduler(blocks, schedule)
     assert len(schedule.observing_blocks) == 3
     assert all([schedule.observing_blocks[0].target == vega,

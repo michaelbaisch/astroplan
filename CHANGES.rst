@@ -1,9 +1,19 @@
-0.10 (unreleased)
+0.11 (unreleased)
 -----------------
 
 - Fix ``block already occupied`` error in ``PriorityScheduler`` by adjusting
   the condition for filled slots in ``_get_filled_indices()``. This was primarily
   an issue for blocks with ``duration`` <= ``time_resolution``. [#550]
+
+0.10.1 (2024-08-13)
+-------------------
+
+- Compatibility with numpy 2.0. [#587]
+
+0.10 (2024-04-04)
+-----------------
+
+- Fix compatibility with astropy v6.0.
 
 0.9.1 (2023-09-20)
 ------------------

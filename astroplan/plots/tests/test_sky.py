@@ -1,6 +1,4 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 import pytest
 
 try:
@@ -24,6 +22,7 @@ def test_image_example():
     return fig
 
 
+@pytest.mark.remote_data
 @pytest.mark.skipif('not HAS_MATPLOTLIB')
 @pytest.mark.mpl_image_compare
 def test_timezone():

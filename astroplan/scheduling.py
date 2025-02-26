@@ -3,9 +3,6 @@
 Tools for scheduling observations.
 """
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import copy
 from abc import ABCMeta, abstractmethod
 import warnings
@@ -26,7 +23,7 @@ __all__ = ['ObservingBlock', 'TransitionBlock', 'Schedule', 'Slot',
            'Transitioner', 'Scorer']
 
 
-class ObservingBlock(object):
+class ObservingBlock:
     """
     An observation to be scheduled, consisting of a target and associated
     constraints on observations.
@@ -100,7 +97,7 @@ class ObservingBlock(object):
         return ob
 
 
-class Scorer(object):
+class Scorer:
     """
     Returns scores and score arrays from the evaluation of constraints on
     observing blocks
@@ -168,7 +165,7 @@ class Scorer(object):
         return sc
 
 
-class TransitionBlock(object):
+class TransitionBlock:
     """
     Parameterizes the "dead time", e.g. between observations, while the
     telescope is slewing, instrument is reconfiguring, etc.
@@ -226,7 +223,7 @@ class TransitionBlock(object):
         return tb
 
 
-class Schedule(object):
+class Schedule:
     """
     An object that represents a schedule, consisting of a list of
     `~astroplan.scheduling.Slot` objects.
@@ -434,7 +431,7 @@ class Schedule(object):
             return slot_index - 1
 
 
-class Slot(object):
+class Slot:
     """
     A time slot consisting of a start and end time
     """
@@ -492,7 +489,7 @@ class Slot(object):
             return [new_slot]
 
 
-class Scheduler(object):
+class Scheduler:
     """
     Schedule a set of `~astroplan.scheduling.ObservingBlock` objects
     """
@@ -965,7 +962,7 @@ class PriorityScheduler(Scheduler):
         return True
 
 
-class Transitioner(object):
+class Transitioner:
     """
     A class that defines how to compute transition times from one block to
     another.
