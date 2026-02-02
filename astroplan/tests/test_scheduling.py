@@ -1,25 +1,24 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import numpy as np
-from astropy.time import Time
 import astropy.units as u
-from astropy.coordinates import SkyCoord, EarthLocation
+import numpy as np
 import pytest
+from astropy.coordinates import SkyCoord, EarthLocation
+from astropy.time import Time
 try:
     import skyfield  # noqa
     HAS_SKYFIELD = True
 except ImportError:
     HAS_SKYFIELD = False
 
-from ..utils import time_grid_from_range
-from ..observer import Observer
-from ..target import FixedTarget, TLETarget, get_skycoord
-from ..constraints import (AirmassConstraint, AtNightConstraint, _get_altaz,
-                           MoonIlluminationConstraint, PhaseConstraint)
-from ..periodic import EclipsingSystem
-from ..scheduling import (ObservingBlock, PriorityScheduler, SequentialScheduler,
-                          Transitioner, TransitionBlock, Schedule, Slot, Scorer)
-from ..exceptions import InvalidTLEDataWarning
+from astroplan.utils import time_grid_from_range
+from astroplan.observer import Observer
+from astroplan.target import FixedTarget, TLETarget, get_skycoord
+from astroplan.constraints import (AirmassConstraint, AtNightConstraint, _get_altaz,
+                                   MoonIlluminationConstraint, PhaseConstraint)
+from astroplan.periodic import EclipsingSystem
+from astroplan.scheduling import (ObservingBlock, PriorityScheduler, SequentialScheduler,
+                                  Transitioner, TransitionBlock, Schedule, Slot, Scorer)
 
 vega = FixedTarget(coord=SkyCoord(ra=279.23473479 * u.deg, dec=38.78368896 * u.deg),
                    name="Vega")
@@ -369,7 +368,7 @@ def test_priority_scheduler_TLETarget():
         start_time = Time('2035-08-02 10:00:00')
         end_time = start_time + 1*u.hour
         schedule = Schedule(start_time, end_time)
-    
+
     # InvalidTLEDataWarning/AstropyWarning and
     # ErfaWarning: ERFA function "utctai" yielded 121 of "dubious year (Note 3)"
     with pytest.warns():

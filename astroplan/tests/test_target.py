@@ -1,9 +1,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import pytest
-
 # Third-party
 import astropy.units as u
+import pytest
 from astropy.coordinates import SkyCoord, GCRS, ICRS
 from astropy.time import Time
 import numpy as np
@@ -14,10 +13,9 @@ except ImportError:
     HAS_SKYFIELD = False
 
 # Package
-from ..target import FixedTarget, TLETarget, get_skycoord
-from ..observer import Observer
-from ..utils import time_grid_from_range
-from ..exceptions import InvalidTLEDataWarning
+from astroplan.target import FixedTarget, TLETarget, get_skycoord
+from astroplan.observer import Observer
+from astroplan.utils import time_grid_from_range
 
 
 @pytest.mark.remote_data
@@ -167,7 +165,7 @@ def test_TLETarget():
     assert altaz_observer.separation(altaz_skyfield) < 26*u.arcsec
 
     # AltAz with multiple times
-    #subaru.altaz(times, tle_target1)
+    # subaru.altaz(times, tle_target1)
     altaz_multiple = tle_target1.altaz(times)
     assert len(altaz_multiple.obstime) == len(altaz_multiple) == len(times)
 
