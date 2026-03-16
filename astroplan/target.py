@@ -423,6 +423,14 @@ class TLETarget(Target):
     """
     A target defined by TLE (Two-Line Element set) for satellites.
     """
+
+    @property
+    def is_time_dependent(self):
+        """
+        Whether this target requires evaluation at a specific time.
+        """
+        return True
+
     def __init__(self, line1, line2, name=None, observer=None, skip_tle_check=False):
         """
         Parameters
