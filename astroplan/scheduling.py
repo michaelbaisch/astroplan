@@ -12,6 +12,7 @@ import numpy as np
 from astropy import units as u
 from astropy.time import Time
 from astropy.table import Table
+from astropy.coordinates import ConvertError
 
 from .utils import time_grid_from_range, stride_array
 from .constraints import AltitudeConstraint
@@ -272,7 +273,7 @@ class Schedule:
             if hasattr(target, "coord"):
                 try:
                     return target.coord.icrs.to_string("hmsdms")
-                except Exception:
+                except ConvertError:
                     return repr(target.coord)
             if hasattr(target, "alt") and hasattr(target, "az"):
                 parts = [
@@ -281,11 +282,12 @@ class Schedule:
                 ]
                 if hasattr(target, "pressure"):
                     try:
-                        p = u.Quantity(target.pressure)
-                        if p.to_value(u.hPa) != 0.0:
-                            parts.append("pressure={:.3f} hPa".format(p.to_value(u.hPa)))
-                    except Exception:
+                        p_hpa = u.Quantity(target.pressure).to_value(u.hPa)
+                    except (TypeError, ValueError, u.UnitConversionError):
                         pass
+                    else:
+                        if p_hpa != 0.0:
+                            parts.append("pressure={:.3f} hPa".format(p_hpa))
                 return ", ".join(parts)
             if hasattr(target, "satellite"):
                 return (
@@ -300,6 +302,8 @@ class Schedule:
         durations = []
         target_types = []
         target_info = []
+        ra = []
+        dec = []
         config = []
 
         for slot in self.slots:
@@ -309,6 +313,14 @@ class Schedule:
                 durations.append(slot.duration.to(u.minute).value)
                 target_names.append(slot.block.target.name)
                 target_types.append(slot.block.target.__class__.__name__)
+                try:
+                    ra.append(u.Quantity(slot.block.target.ra))
+                except (AttributeError, NotImplementedError):
+                    ra.append("")
+                try:
+                    dec.append(u.Quantity(slot.block.target.dec))
+                except (AttributeError, NotImplementedError):
+                    dec.append("")
                 target_info.append(_format_target_info(slot.block.target))
                 config.append(slot.block.configuration)
             elif show_transitions and slot.block:
@@ -317,6 +329,8 @@ class Schedule:
                 durations.append(slot.duration.to(u.minute).value)
                 target_names.append("TransitionBlock")
                 target_types.append("TransitionBlock")
+                ra.append("")
+                dec.append("")
                 target_info.append("")
                 changes = list(slot.block.components.keys())
                 if "slew_time" in changes:
@@ -328,16 +342,30 @@ class Schedule:
                 durations.append(slot.duration.to(u.minute).value)
                 target_names.append("Unused Time")
                 target_types.append("")
+                ra.append("")
+                dec.append("")
                 target_info.append("")
                 config.append("")
 
         return Table(
-            [target_names, start_times, end_times, durations, target_types, target_info, config],
+            [
+                target_names,
+                start_times,
+                end_times,
+                durations,
+                ra,
+                dec,
+                target_types,
+                target_info,
+                config,
+            ],
             names=(
                 "target",
                 "start time (UTC)",
                 "end time (UTC)",
                 "duration (minutes)",
+                "ra",
+                "dec",
                 "target type",
                 "target info",
                 "configuration",
