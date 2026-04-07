@@ -6,7 +6,6 @@ import astropy.units as u
 import pytest
 from astropy.coordinates import SkyCoord, GCRS, ICRS, EarthLocation
 from astropy.time import Time
-import numpy as np
 try:
     import skyfield  # noqa
     HAS_SKYFIELD = True
