@@ -364,7 +364,7 @@ class AltAzTarget(Target):
             class_name, self.name, alt, az
         )
 
-    def get_skycoord(self, times):
+    def get_skycoord(self, times, observer=None):
         """
         Evaluate this target to an ICRS `~astropy.coordinates.SkyCoord` at ``times``.
 
@@ -372,6 +372,11 @@ class AltAzTarget(Target):
         ----------
         times : `~astropy.time.Time` or time-like
             Times at which to evaluate the target.
+
+        observer : `~astroplan.Observer`, optional
+            Observer supplied through the common `get_skycoord()` interface.
+            This target's AltAz direction is defined by its stored location,
+            so this argument is not used.
 
         Returns
         -------
@@ -406,7 +411,7 @@ class NonFixedTarget(Target):
     """
 
 
-def get_skycoord(targets, times=None):
+def get_skycoord(targets, times=None, observer=None):
     """
     Return an `~astropy.coordinates.SkyCoord` object.
 
@@ -426,6 +431,11 @@ def get_skycoord(targets, times=None):
         Times at which to evaluate time-dependent targets. Required if any
         target in ``targets`` needs evaluation at a time.
 
+    observer : `~astroplan.Observer`, optional
+        Observer to use when evaluating targets whose apparent sky position
+        depends on the observing location. Ignored for coordinates and targets
+        that do not require observer context.
+
     Returns
     -------
     coord : `~astropy.coordinates.SkyCoord`
@@ -443,7 +453,7 @@ def get_skycoord(targets, times=None):
         if hasattr(obj, "coord"):
             return obj.coord
         if callable(getattr(obj, "get_skycoord", None)):
-            return obj.get_skycoord(times)
+            return obj.get_skycoord(times, observer=observer)
         return obj
 
     # Ignore non-scalar SkyCoords targets here
