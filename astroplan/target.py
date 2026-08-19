@@ -380,7 +380,7 @@ class AltAzTarget(Target):
             class_name, self.name, alt, az
         )
 
-    def get_skycoord(self, times):
+    def get_skycoord(self, times, observer=None):
         """
         Evaluate this target to an ICRS `~astropy.coordinates.SkyCoord` at ``times``.
 
@@ -388,6 +388,11 @@ class AltAzTarget(Target):
         ----------
         times : `~astropy.time.Time` or time-like
             Times at which to evaluate the target.
+
+        observer : `~astroplan.Observer`, optional
+            Observer supplied through the common `get_skycoord()` interface.
+            This target's AltAz direction is defined by its stored location,
+            so this argument is not used.
 
         Returns
         -------
