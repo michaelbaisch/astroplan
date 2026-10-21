@@ -55,6 +55,13 @@
 - Fix ``PhaseConstraint`` raising a ``TypeError`` when ``min`` or ``max`` is
   not given, instead of defaulting to the full phase range. [#639]
 
+- Improve performance of night-time shading in ``plot_airmass``,
+  ``plot_altitude``, and ``plot_schedule_airmass`` by vectorizing solar
+  event calculations. Handle missing sunrise and twilight events at
+  high latitudes, and shade empty schedules. The ``show_night`` option
+  now uses the darker, graded twilight shading of ``plot_airmass``.
+  [#559]
+
 0.10.1 (2024-08-13)
 -------------------
 
